@@ -1,0 +1,151 @@
+{% extends 'base.html' %} {% block title %}{{ client.name }} - Client Detail{%
+endblock %} {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>{{ client.name }}</h1>
+                <p class="text-muted">{{ client.email }}</p>
+            </div>
+            <div>
+                <a
+                    href="{% url 'admin:chatbot_client_change' client.id %}"
+                    class="btn btn-primary"
+                >
+                    <i class="bi bi-pencil"></i> Edit Client
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client Info Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>{{ client.total_sessions }}</h5>
+                <p class="text-muted">Total Sessions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>{{ client.total_messages }}</h5>
+                <p class="text-muted">Total Messages</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>{{ client.avg_response_time }}ms</h5>
+                <p class="text-muted">Avg Response Time</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>
+                    {{ client.current_month_usage }}/{{
+                    client.monthly_message_limit }}
+                </h5>
+                <p class="text-muted">Monthly Usage</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Embed Code -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Embed Code</h5>
+            </div>
+            <div class="card-body">
+                <p>Copy this code to embed the chatbot on your website:</p>
+                <div class="bg-light p-3 rounded">
+                    <code id="embedCode"
+                        >&lt;script src="{{ request.scheme }}://{{
+                        request.get_host
+                        }}/widget/v1/chatbot.js"&gt;&lt;/script&gt;
+                        &lt;script&gt; initChatbot({ apiKey: "{{ client.api_key
+                        }}", apiEndpoint: "{{ request.get_host }}" });
+                        &lt;/script&gt;</code
+                    >
+                </div>
+                <button
+                    class="btn btn-outline-primary mt-2"
+                    onclick="copyEmbedCode()"
+                >
+                    <i class="bi bi-copy"></i> Copy Code
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sessions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Domain</th>
+                                <th>Started</th>
+                                <th>Duration</th>
+                                <th>Messages</th>
+                                <th>Tool Calls</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in sessions %}
+                            <tr>
+                                <td>
+                                    <code>{{ session.id|slice:":8" }}...</code>
+                                </td>
+                                <td>{{ session.domain }}</td>
+                                <td>{{ session.started_at }}</td>
+                                <td>
+                                    {% if session.ended_at %} {{
+                                    session.duration }} {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ session.message_count }}</td>
+                                <td>{{ session.tool_calls_count }}</td>
+                                <td>
+                                    <button
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="viewSessionMessages('{{ session.id }}')"
+                                    >
+                                        <i class="bi bi-eye"></i> View Messages
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    No sessions yet
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
