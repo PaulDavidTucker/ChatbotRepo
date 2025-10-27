@@ -1,35 +1,7 @@
-const fs = require("fs");
-const path = require("path");
 
-// Create dist directory if it doesn't exist
-const distPath = path.join(__dirname, "../dist");
-if (!fs.existsSync(distPath)) {
-  fs.mkdirSync(distPath, { recursive: true });
-}
-
-// Read the built files
-const buildPath = path.join(__dirname, "../build/static");
-const jsFiles = fs
-  .readdirSync(path.join(buildPath, "js"))
-  .filter((f) => f.endsWith(".js"));
-const cssFiles = fs
-  .readdirSync(path.join(buildPath, "css"))
-  .filter((f) => f.endsWith(".css"));
-
-// Read CSS content
-let cssContent = "";
-if (cssFiles.length > 0) {
-  cssContent = fs.readFileSync(
-    path.join(buildPath, "css", cssFiles[0]),
-    "utf8",
-  );
-}
-
-// Create the widget with your custom styling
-let widgetContent = `
 (function() {
     // CSS Variables and Styling
-    const customCSS = \`
+    const customCSS = `
     :root {
         --primary-accent: #007bff;
         --secondary-accent: #0056b3;
@@ -254,7 +226,7 @@ let widgetContent = `
             transform-origin: bottom center;
         }
     }
-    \`;
+    `;
 
     // Inject CSS
     const style = document.createElement('style');
@@ -271,11 +243,11 @@ let widgetContent = `
         // Create container
         const container = document.createElement('div');
         container.className = 'chatbot-container';
-        container.style.cssText = \`
-            --primary-color: \${config.primaryColor || '#007bff'};
-            --position-right: \${config.position?.includes('right') ? '25px' : 'auto'};
-            --position-left: \${config.position?.includes('left') ? '25px' : 'auto'};
-        \`;
+        container.style.cssText = `
+            --primary-color: ${config.primaryColor || '#007bff'};
+            --position-right: ${config.position?.includes('right') ? '25px' : 'auto'};
+            --position-left: ${config.position?.includes('left') ? '25px' : 'auto'};
+        `;
         document.body.appendChild(container);
 
         // Create widget button
@@ -290,9 +262,9 @@ let widgetContent = `
         const chatWindow = document.createElement('div');
         chatWindow.className = 'chat-window';
 
-        chatWindow.innerHTML = \`
+        chatWindow.innerHTML = `
             <div class="chat-header">
-                <h3>\${config.title || 'AI Assistant'}</h3>
+                <h3>${config.title || 'AI Assistant'}</h3>
                 <button class="close-chat-btn" aria-label="Close chat">&times;</button>
             </div>
             <div class="chat-body" id="chat-messages"></div>
@@ -302,7 +274,7 @@ let widgetContent = `
                     <button type="submit" aria-label="Send message">→</button>
                 </form>
             </div>
-        \`;
+        `;
 
         container.appendChild(chatWindow);
 
@@ -319,7 +291,7 @@ let widgetContent = `
 
         function initializeWebSocket() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const wsUrl = \`\${wsProtocol}\${config.apiEndpoint}/ws/chat/\${config.apiKey}/?domain=\${encodeURIComponent(window.location.hostname)}\`;
+            const wsUrl = `${wsProtocol}${config.apiEndpoint}/ws/chat/${config.apiKey}/?domain=${encodeURIComponent(window.location.hostname)}`;
 
             socket = new WebSocket(wsUrl);
 
@@ -367,7 +339,7 @@ let widgetContent = `
 
         function addMessage(message, sender) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = \`chat-message \${sender}\`;
+            messageDiv.className = `chat-message ${sender}`;
             messageDiv.textContent = message;
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
@@ -380,13 +352,13 @@ let widgetContent = `
         function addLoadingMessage() {
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'chat-message bot';
-            loadingDiv.innerHTML = \`
+            loadingDiv.innerHTML = `
                 <div class="loading-dots">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
-            \`;
+            `;
             messagesContainer.appendChild(loadingDiv);
             currentBotMessage = loadingDiv;
             scrollToBottom();
@@ -472,11 +444,3 @@ let widgetContent = `
         }, 100);
     };
 })();
-`;
-
-// Write the final widget file
-const outputPath = path.join(__dirname, "../dist/chatbot-widget.js");
-fs.writeFileSync(outputPath, widgetContent);
-console.log("Widget built successfully!");
-console.log(`Output: ${outputPath}`);
-console.log(`Size: ${Math.round(widgetContent.length / 1024)}KB`);

@@ -1,0 +1,331 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Analytics - Chatbot
+Dashboard{% endblock %} {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Advanced Analytics</h1>
+        <p class="text-muted">
+            Detailed insights into your chatbot performance
+        </p>
+    </div>
+</div>
+
+<!-- Time Range Selector -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5>Time Range</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="btn-group" role="group">
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary active"
+                                data-range="7"
+                            >
+                                Last 7 days
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                data-range="30"
+                            >
+                                Last 30 days
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                data-range="90"
+                            >
+                                Last 3 months
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ total_sessions }}</h3>
+                <p class="mb-0">Total Sessions</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ total_messages }}</h3>
+                <p class="mb-0">Total Messages</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ avg_session_length }}s</h3>
+                <p class="mb-0">Avg Session</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ avg_response_time }}ms</h3>
+                <p class="mb-0">Avg Response</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ tool_usage }}</h3>
+                <p class="mb-0">Tool Calls</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary">{{ unique_domains }}</h3>
+                <p class="mb-0">Unique Domains</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Messages Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="messagesTimeChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Sessions by Hour of Day</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Top Domains</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="domainsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Client Usage Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="clientUsageChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Response Time Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="responseTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Sessions</th>
+                                <th>Messages</th>
+                                <th>Avg Session Length</th>
+                                <th>Avg Response Time</th>
+                                <th>Tool Usage</th>
+                                <th>Success Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for metric in performance_metrics %}
+                            <tr>
+                                <td>{{ metric.client_name }}</td>
+                                <td>{{ metric.sessions }}</td>
+                                <td>{{ metric.messages }}</td>
+                                <td>{{ metric.avg_session_length }}s</td>
+                                <td>{{ metric.avg_response_time }}ms</td>
+                                <td>{{ metric.tool_calls }}</td>
+                                <td>
+                                    <span
+                                        class="badge {% if metric.success_rate > 90 %}bg-success{% elif metric.success_rate > 70 %}bg-warning{% else %}bg-danger{% endif %}"
+                                    >
+                                        {{ metric.success_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export and Settings -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Export Data</h5>
+            </div>
+            <div class="card-body">
+                <p>Export your analytics data for external analysis</p>
+                <div class="btn-group">
+                    <button
+                        class="btn btn-outline-primary"
+                        onclick="exportData('csv')"
+                    >
+                        <i class="bi bi-file-earmark-csv"></i> Export CSV
+                    </button>
+                    <button
+                        class="btn btn-outline-primary"
+                        onclick="exportData('json')"
+                    >
+                        <i class="bi bi-file-earmark-code"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Analytics Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="realTimeUpdates"
+                        checked
+                    />
+                    <label class="form-check-label" for="realTimeUpdates">
+                        Real-time updates
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="detailedLogging"
+                    />
+                    <label class="form-check-label" for="detailedLogging">
+                        Detailed conversation logging
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Analytics data from Django context
+    const analyticsData = {
+        messagesTime: {{ messages_time_data|safe }},
+        hourly: {{ hourly_data|safe }},
+        domains: {{ domains_data|safe }},
+        clientUsage: {{ client_usage_data|safe }},
+        responseTime: {{ response_time_data|safe }}
+    };
+</script>
+{% endblock %} {% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        initializeAnalyticsCharts();
+        setupTimeRangeSelector();
+    });
+
+    function initializeAnalyticsCharts() {
+        // Messages over time chart
+        new Chart(document.getElementById("messagesTimeChart"), {
+            type: "line",
+            data: analyticsData.messagesTime,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+            },
+        });
+
+        // Hourly distribution
+        new Chart(document.getElementById("hourlyChart"), {
+            type: "bar",
+            data: analyticsData.hourly,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
+        });
+
+        // Other charts...
+    }
+
+    function setupTimeRangeSelector() {
+        document.querySelectorAll("[data-range]").forEach((btn) => {
+            btn.addEventListener("click", function () {
+                // Update active state
+                document
+                    .querySelectorAll("[data-range]")
+                    .forEach((b) => b.classList.remove("active"));
+                this.classList.add("active");
+
+                // Reload data for selected range
+                const range = this.getAttribute("data-range");
+                loadAnalyticsData(range);
+            });
+        });
+    }
+
+    function exportData(format) {
+        window.location.href = `/api/analytics/export/?format=${format}`;
+    }
+</script>
+{% endblock %}

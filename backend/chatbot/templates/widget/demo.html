@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Widget Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .config-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .embed-code {
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🤖 Chatbot Widget Demo</h1>
+            <p>Test and customize your chatbot widget</p>
+        </div>
+
+        <div class="config-panel">
+            <h3>Widget Configuration</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="apiKey">API Key:</label>
+                    <input type="text" id="apiKey" value="demo-key-12345" placeholder="Your API key">
+                </div>
+                <div class="form-group">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" value="Demo Assistant" placeholder="Chatbot title">
+                </div>
+                <div class="form-group">
+                    <label for="primaryColor">Primary Color:</label>
+                    <input type="color" id="primaryColor" value="#007bff">
+                </div>
+                <div class="form-group">
+                    <label for="position">Position:</label>
+                    <select id="position">
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="welcomeMessage">Welcome Message:</label>
+                <textarea id="welcomeMessage" rows="2">Hello! I'm your demo assistant. How can I help you today?</textarea>
+            </div>
+            <button onclick="updateWidget()">Update Widget</button>
+        </div>
+
+        <div class="config-panel">
+            <h3>Embed Code</h3>
+            <p>Copy this code to embed the widget on your website:</p>
+            <div class="embed-code" id="embedCode"></div>
+            <button onclick="copyEmbedCode()" style="margin-top: 10px;">Copy Code</button>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p>The widget should appear in the bottom right corner of this page.</p>
+            <p><em>Try clicking it to test the chat functionality!</em></p>
+        </div>
+    </div>
+
+    <!-- Widget Script -->
+    <script src="{% url 'serve_widget' %}"></script>
+    <script>
+        let currentWidget = null;
+
+        function updateWidget() {
+            // Remove existing widget
+            if (currentWidget) {
+                currentWidget.remove();
+            }
+
+            // Get configuration values
+            const config = {
+                apiKey: document.getElementById('apiKey').value,
+                apiEndpoint: '{{ request.get_host }}',
+                title: document.getElementById('title').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                position: document.getElementById('position').value,
+                welcomeMessage: document.getElementById('welcomeMessage').value
+            };
+
+            // Initialize new widget
+            if (window.initChatbot) {
+                initChatbot(config);
+                currentWidget = document.querySelector('.chatbot-container');
+            }
+
+            // Update embed code
+            updateEmbedCode(config);
+        }
+
+        function updateEmbedCode(config) {
+            const embedCode = `<script src="{{ request.scheme }}://{{ request.get_host }}{% url 'serve_widget' %}"></script>
+<script>
+initChatbot({
+    apiKey: "${config.apiKey}",
+    apiEndpoint: "{{ request.get_host }}",
+    title: "${config.title}",
+    primaryColor: "${config.primaryColor}",
+    position: "${config.position}",
+    welcomeMessage: "${config.welcomeMessage}"
+});
+</script>`;
+
+            document.getElementById('embedCode').textContent = embedCode;
+        }
+
+        function copyEmbedCode() {
+            const embedCode = document.getElementById('embedCode').textContent;
+            navigator.clipboard.writeText(embedCode).then(() => {
+                alert('Embed code copied to clipboard!');
+            });
+        }
+
+        // Initialize widget on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateWidget();
+        });
+    </script>
+</body>
+</html>
