@@ -42,16 +42,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-        # Send welcome message
-        welcome_msg = self.config.get(
-            "welcome_message", "Hello! How can I help you today?"
-        )
-        await self.send(
-            text_data=json.dumps(
-                {"type": "welcome", "message": welcome_msg, "sender": "bot"}
-            )
-        )
-
     @database_sync_to_async
     def get_client(self, api_key):
         """Get and validate client"""
@@ -84,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         key = env("OPENAI_API_KEY", default=os.environ.get("OPENAI_API_KEY"))
 
         # Get configuration with defaults
-        model_name = self.config.get("model", "gpt-4o-mini")
+        model_name = self.config.get("model", "gpt-5-mini")
         temperature = self.config.get("temperature", 0.1)
         max_tokens = self.config.get("max_tokens", 1000)
         system_prompt = self.config.get(
@@ -97,7 +87,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             model=f"openai:{model_name}",
             temperature=temperature,
             max_tokens=max_tokens,
-            reasoning_effort="low",
             timeout=30,
             max_retries=2,
             api_key=key,
