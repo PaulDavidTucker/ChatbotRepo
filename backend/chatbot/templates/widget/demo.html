@@ -1,181 +1,236 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Widget Demo</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .demo-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        .demo-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .config-panel {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        .embed-code {
-            background: #f1f3f5;
-            padding: 15px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            border-left: 4px solid #007bff;
-        }
-    </style>
-</head>
-<body>
-    <div class="demo-container">
-        <div class="demo-header">
-            <h1>🤖 Chatbot Widget Demo</h1>
-            <p>Test and customize your chatbot widget</p>
-        </div>
+{% extends 'base.html' %} {% block title %} Widget Demo - Chatbot Dashboard {% endblock %} {% block content %}
+<style>
+    /* Local styles for the demo page */
+    .demo-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    }
+    .demo-header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 20px;
+    }
+    .config-panel {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="color"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    input[type="color"] {
+        padding: 5px;
+        height: 45px;
+    }
+    .embed-code {
+        background: #212529;
+        color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        font-family:
+            "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier,
+            monospace;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-all;
+        border-left: 4px solid #0d6efd;
+    }
+    .toast-notification {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background-color: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1050;
+        opacity: 0;
+        transition:
+            opacity 0.3s,
+            transform 0.3s;
+        transform: translateY(-20px);
+    }
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
 
-        <div class="config-panel">
-            <h3>Widget Configuration</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label for="apiKey">API Key:</label>
-                    <input type="text" id="apiKey" value="demo-key-12345" placeholder="Your API key">
-                </div>
-                <div class="form-group">
-                    <label for="title">Title:</label>
-                    <input type="text" id="title" value="Demo Assistant" placeholder="Chatbot title">
-                </div>
-                <div class="form-group">
-                    <label for="primaryColor">Primary Color:</label>
-                    <input type="color" id="primaryColor" value="#007bff">
-                </div>
-                <div class="form-group">
-                    <label for="position">Position:</label>
-                    <select id="position">
-                        <option value="bottom-right">Bottom Right</option>
-                        <option value="bottom-left">Bottom Left</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="welcomeMessage">Welcome Message:</label>
-                <textarea id="welcomeMessage" rows="2">Hello! I'm your demo assistant. How can I help you today?</textarea>
-            </div>
-            <button onclick="updateWidget()">Update Widget</button>
-        </div>
-
-        <div class="config-panel">
-            <h3>Embed Code</h3>
-            <p>Copy this code to embed the widget on your website:</p>
-            <div class="embed-code" id="embedCode"></div>
-            <button onclick="copyEmbedCode()" style="margin-top: 10px;">Copy Code</button>
-        </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <p>The widget should appear in the bottom right corner of this page.</p>
-            <p><em>Try clicking it to test the chat functionality!</em></p>
-        </div>
+<div class="demo-container">
+    <div class="demo-header">
+        <h1>🤖 Chatbot Widget Demo</h1>
+        <p class="text-muted">
+            Instantly test and customize your chatbot widget settings.
+        </p>
     </div>
 
-    <!-- Widget Script -->
-    <script src="{% url 'serve_widget' %}"></script>
-    <script>
-        let currentWidget = null;
+    <div class="config-panel">
+        <h3 class="mb-3">Widget Configuration</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+            <div class="form-group">
+                <label for="apiKey">API Key:</label>
+                <input
+                    type="text"
+                    id="apiKey"
+                    value="demo-key-12345"
+                    placeholder="Your API key"
+                />
+            </div>
+            <div class="form-group">
+                <label for="title">Header Title:</label>
+                <input
+                    type="text"
+                    id="title"
+                    value="AI Sales Assistant"
+                    placeholder="Chatbot title"
+                />
+            </div>
+            <div class="form-group">
+                <label for="primaryColor">Primary Color:</label>
+                <input type="color" id="primaryColor" value="#764ba2" />
+            </div>
+            <div class="form-group">
+                <label for="position">Position:</label>
+                <select id="position" class="form-select">
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group mt-2">
+            <label for="welcomeMessage">Welcome Message:</label>
+            <textarea id="welcomeMessage" rows="2" class="form-control">
+Hello! I'm a demo assistant. Ask me anything to see how I work!</textarea
+            >
+        </div>
+        <button class="btn btn-primary mt-2" onclick="updateWidget()">
+            <i class="bi bi-arrow-clockwise"></i> Update Widget
+        </button>
+    </div>
 
-        function updateWidget() {
-            // Remove existing widget
-            if (currentWidget) {
-                currentWidget.remove();
-            }
+    <div class="config-panel">
+        <h3>Embed Code</h3>
+        <p>Copy this code to embed the final widget on your website:</p>
+        <div class="embed-code" id="embedCode"></div>
+        <button class="btn btn-secondary mt-3" onclick="copyEmbedCode()">
+            <i class="bi bi-clipboard"></i> Copy Code
+        </button>
+    </div>
+</div>
 
-            // Get configuration values
-            const config = {
-                apiKey: document.getElementById('apiKey').value,
-                apiEndpoint: '{{ request.get_host }}',
-                title: document.getElementById('title').value,
-                primaryColor: document.getElementById('primaryColor').value,
-                position: document.getElementById('position').value,
-                welcomeMessage: document.getElementById('welcomeMessage').value
-            };
+<!-- This is a placeholder for the dynamically loaded widget -->
+<div id="widget-placeholder"></div>
+{% endblock %} {% block extra_js %}
+<script>
+    let currentWidgetContainer = null;
 
-            // Initialize new widget
+    function updateWidget() {
+        // Remove the previous widget container if it exists
+        if (currentWidgetContainer) {
+            currentWidgetContainer.remove();
+        }
+
+        // Get configuration values from the form
+        const config = {
+            apiKey:
+                document.getElementById("apiKey").value.trim() || "demo-key",
+            apiEndpoint: "{{ request.get_host }}",
+            title: document.getElementById("title").value,
+            primaryColor: document.getElementById("primaryColor").value,
+            position: document.getElementById("position").value,
+            welcomeMessage: document.getElementById("welcomeMessage").value,
+        };
+
+        // Create a new script element to load the widget
+        // This ensures the widget's internal state is reset completely
+        const script = document.createElement("script");
+        script.src = "{% url 'serve_widget' %}";
+        script.onload = () => {
             if (window.initChatbot) {
                 initChatbot(config);
-                currentWidget = document.querySelector('.chatbot-container');
+                // Find the newly created container to keep a reference for removal
+                currentWidgetContainer =
+                    document.querySelector(".chatbot-container");
             }
+        };
 
-            // Update embed code
-            updateEmbedCode(config);
-        }
+        // Append the script to the body to execute it
+        document.body.appendChild(script);
 
-        function updateEmbedCode(config) {
-            const embedCode = `<script src="{{ request.scheme }}://{{ request.get_host }}{% url 'serve_widget' %}"></script>
+        // Update the embed code display
+        updateEmbedCode(config);
+    }
+
+    function updateEmbedCode(config) {
+        const host = "{{ request.scheme }}://{{ request.get_host }}";
+        // Using template literals and escaping for clarity
+        const embedCode = `<script src="${host}{% url 'serve_widget' %}"><\/script>
 <script>
 initChatbot({
-    apiKey: "${config.apiKey}",
-    apiEndpoint: "{{ request.get_host }}",
-    title: "${config.title}",
-    primaryColor: "${config.primaryColor}",
-    position: "${config.position}",
-    welcomeMessage: "${config.welcomeMessage}"
+  apiKey: "${config.apiKey}",
+  apiEndpoint: "${host}",
+  title: "${config.title}",
+  primaryColor: "${config.primaryColor}",
+  position: "${config.position}",
+  welcomeMessage: "${config.welcomeMessage}"
 });
-</script>`;
+<\/script>`;
 
-            document.getElementById('embedCode').textContent = embedCode;
-        }
+        document.getElementById("embedCode").textContent = embedCode;
+    }
 
-        function copyEmbedCode() {
-            const embedCode = document.getElementById('embedCode').textContent;
-            navigator.clipboard.writeText(embedCode).then(() => {
-                alert('Embed code copied to clipboard!');
-            });
-        }
+    function showToast(message) {
+        const toast = document.createElement("div");
+        toast.className = "toast-notification";
+        toast.textContent = message;
+        document.body.appendChild(toast);
 
-        // Initialize widget on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateWidget();
+        // Trigger fade in
+        setTimeout(() => {
+            toast.classList.add("show");
+        }, 10);
+
+        // Fade out and remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove("show");
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+
+    function copyEmbedCode() {
+        const embedCode = document.getElementById("embedCode").textContent;
+        navigator.clipboard.writeText(embedCode).then(() => {
+            showToast("Embed code copied to clipboard!");
         });
-    </script>
-</body>
-</html>
+    }
+
+    // Initialize the widget for the first time on page load
+    document.addEventListener("DOMContentLoaded", function () {
+        updateWidget();
+    });
+</script>
+{% endblock %}

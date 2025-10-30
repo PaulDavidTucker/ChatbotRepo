@@ -59,6 +59,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             client = Client.objects.get(api_key=api_key, is_active=True)
             return client
         except Client.DoesNotExist:
+            print("Missing a client!")
             return None
 
     @database_sync_to_async
