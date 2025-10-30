@@ -1,126 +1,72 @@
-{% extends 'base.html' %} {% load static %} {% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}Dashboard - Chatbot
+Platform{% endblock %} {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1>Chatbot Analytics Dashboard</h1>
-        <p class="text-muted">Monitor your chatbot deployments and usage</p>
-    </div>
-</div>
-
-<!-- Stats Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ total_clients }}</h4>
-                        <span>Active Clients</span>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-people fs-2"></i>
-                    </div>
-                </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Chatbot Dashboard</h1>
+                <p class="text-muted">
+                    Manage your chatbot clients and monitor activity
+                </p>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ total_sessions_today }}</h4>
-                        <span>Sessions Today</span>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-chat-dots fs-2"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>{{ total_messages_today }}</h4>
-                        <span>Messages Today</span>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-envelope fs-2"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>${{ estimated_revenue }}</h4>
-                        <span>Est. Revenue</span>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="bi bi-currency-dollar fs-2"></i>
-                    </div>
-                </div>
+            <div>
+                <a
+                    href="{% url 'admin:chatbot_client_add' %}"
+                    class="btn btn-primary"
+                >
+                    <i class="bi bi-plus-circle"></i> New Client
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Charts Row -->
+<!-- Overview Stats -->
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5>Usage Over Time (Last 7 Days)</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="usageChart" height="100"></canvas>
+            <div class="card-body text-center">
+                <h3 class="text-primary">{{ total_clients }}</h3>
+                <p class="text-muted mb-0">Active Clients</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                <h5>Top Domains</h5>
+            <div class="card-body text-center">
+                <h3 class="text-success">{{ total_sessions }}</h3>
+                <p class="text-muted mb-0">Total Sessions</p>
             </div>
-            <div class="card-body">
-                <canvas id="domainsChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3 class="text-info">{{ clients|length }}</h3>
+                <p class="text-muted mb-0">Domains</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Client Management -->
-<div class="row">
+<!-- Clients List -->
+<div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div
-                class="card-header d-flex justify-content-between align-items-center"
-            >
-                <h5>Client Management</h5>
-                <button
-                    class="btn btn-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#newClientModal"
-                >
-                    <i class="bi bi-plus"></i> New Client
-                </button>
+            <div class="card-header">
+                <h5>Clients</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Client Name</th>
+                                <th>Name</th>
+                                <th>Domain</th>
+                                <th>Sessions</th>
+                                <th>Total Messages</th>
                                 <th>API Key</th>
-                                <th>Domains</th>
-                                <th>Usage This Month</th>
-                                <th>Last Activity</th>
-                                <th>Status</th>
+                                <th>Created</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -128,61 +74,37 @@
                             {% for client in clients %}
                             <tr>
                                 <td>
-                                    <strong>{{ client.name }}</strong><br />
-                                    <small class="text-muted"
-                                        >{{ client.email }}</small
-                                    >
-                                </td>
-                                <td>
-                                    <code
-                                        class="api-key"
-                                        data-key="{{ client.api_key }}"
-                                    >
-                                        {{ client.api_key|slice:":8" }}...
-                                    </code>
-                                    <button
-                                        class="btn btn-sm btn-outline-secondary copy-btn"
-                                        onclick="copyApiKey('{{ client.api_key }}')"
-                                    >
-                                        <i class="bi bi-copy"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    {% if client.allowed_domains %} {% for
-                                    domain in client.allowed_domains %}
+                                    <strong>{{ client.name }}</strong>
+                                    {% if not client.is_active %}
                                     <span class="badge bg-secondary"
-                                        >{{ domain }}</span
-                                    >
-                                    {% endfor %} {% else %}
-                                    <span class="text-muted">All domains</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="progress" style="height: 20px">
-                                        <div
-                                            class="progress-bar"
-                                            style="width: {{ client.usage_percentage }}%"
-                                            role="progressbar"
-                                        >
-                                            {{ client.current_month_usage }}/{{
-                                            client.monthly_message_limit }}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    {{
-                                    client.last_activity|default:"Never"|timesince
-                                    }} ago
-                                </td>
-                                <td>
-                                    {% if client.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                    <span class="badge bg-danger"
                                         >Inactive</span
                                     >
                                     {% endif %}
                                 </td>
+                                <td>
+                                    <code>{{ client.domain }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info"
+                                        >{{ client.session_count|default:0
+                                        }}</span
+                                    >
+                                </td>
+                                <td>{{ client.total_messages|default:0 }}</td>
+                                <td>
+                                    <code class="text-muted"
+                                        >{{ client.api_key|slice:":12"
+                                        }}...</code
+                                    >
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        onclick="copyApiKey('{{ client.api_key }}')"
+                                        title="Copy API Key"
+                                    >
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </td>
+                                <td>{{ client.created_at|date:"M d, Y" }}</td>
                                 <td>
                                     <a
                                         href="{% url 'client_detail' client.id %}"
@@ -200,9 +122,17 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">
-                                    No clients yet. Create your first client to
-                                    get started!
+                                <td colspan="7" class="text-center py-4">
+                                    <p class="text-muted mb-3">
+                                        No clients yet
+                                    </p>
+                                    <a
+                                        href="{% url 'admin:chatbot_client_add' %}"
+                                        class="btn btn-primary"
+                                    >
+                                        <i class="bi bi-plus-circle"></i> Create
+                                        Your First Client
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -214,133 +144,95 @@
     </div>
 </div>
 
-<!-- New Client Modal -->
-<div class="modal fade" id="newClientModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="newClientForm">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Client</h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                    ></button>
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Sessions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Session ID</th>
+                                <th>Started</th>
+                                <th>Messages</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_sessions %}
+                            <tr>
+                                <td>
+                                    <a
+                                        href="{% url 'client_detail' session.client.id %}"
+                                    >
+                                        {{ session.client.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <code
+                                        >{{ session.session_id|slice:":16"
+                                        }}...</code
+                                    >
+                                </td>
+                                <td>
+                                    {{ session.started_at|date:"M d, H:i" }}
+                                </td>
+                                <td>{{ session.message_count }}</td>
+                                <td>
+                                    {% if session.ended_at %}
+                                    <span class="badge bg-secondary"
+                                        >Ended</span
+                                    >
+                                    {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    No sessions yet
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Client Name</label>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    name="name"
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input
-                                    type="email"
-                                    class="form-control"
-                                    name="email"
-                                    required
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label"
-                            >Allowed Domains (optional)</label
-                        >
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="domains"
-                            placeholder="domain1.com, domain2.com"
-                        />
-                        <div class="form-text">
-                            Leave empty to allow all domains
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Chatbot Title</label>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    name="title"
-                                    value="AI Assistant"
-                                />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Primary Color</label>
-                                <input
-                                    type="color"
-                                    class="form-control form-control-color"
-                                    name="primary_color"
-                                    value="#007bff"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Welcome Message</label>
-                        <textarea
-                            class="form-control"
-                            name="welcome_message"
-                            rows="2"
-                        >
-Hello! How can I help you today?</textarea
-                        >
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">System Prompt</label>
-                        <textarea
-                            class="form-control"
-                            name="system_prompt"
-                            rows="3"
-                        >
-You are a helpful assistant.</textarea
-                        >
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Create Client
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Chart data from Django context
-    const chartData = {
-        usage: {{ usage_chart_data|safe }},
-        domains: {{ domains_chart_data|safe }}
-    };
-</script>
-{% endblock %} {% block extra_js %}
-<script>
-    // Initialize charts
-    document.addEventListener("DOMContentLoaded", function () {
-        initializeCharts();
-        setupNewClientForm();
-    });
+    function copyApiKey(apiKey) {
+        navigator.clipboard.writeText(apiKey).then(function () {
+            showToast("API Key copied to clipboard!", "success");
+        });
+    }
+
+    function showToast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.top = "20px";
+        toast.style.right = "20px";
+        toast.style.zIndex = "9999";
+        toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
 </script>
 {% endblock %}

@@ -1,123 +1,121 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import Client, ChatbotConfiguration, ChatSession, ChatMessage
+from .models import Client, ChatSession
 
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "name",
-        "email",
+        "domain",
         "api_key_short",
-        "usage_display",
+        "session_count",
         "is_active",
         "created_at",
-    )
-    list_filter = ("is_active", "created_at")
-    search_fields = ("name", "email", "api_key")
-    readonly_fields = ("id", "api_key", "created_at", "updated_at")
+    ]
+    list_filter = ["is_active", "created_at"]
+    search_fields = ["name", "domain", "api_key"]
+    readonly_fields = ["id", "api_key", "created_at", "updated_at", "created_by"]
 
     fieldsets = (
-        (None, {"fields": ("name", "email", "is_active")}),
-        ("API Configuration", {"fields": ("api_key", "allowed_domains")}),
-        ("Usage Limits", {"fields": ("monthly_message_limit", "current_month_usage")}),
+        (None, {"fields": ("name", "domain", "is_active")}),
+        ("API Configuration", {"fields": ("api_key",)}),
+        ("Configuration (JSON)", {"fields": ("config",)}),
         (
             "Metadata",
-            {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)},
+            {
+                "fields": ("id", "created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
         ),
     )
 
     def api_key_short(self, obj):
-        return f"{obj.api_key[:8]}..."
+        """Display shortened API key"""
+        return f"{obj.api_key[:12]}..."
 
     api_key_short.short_description = "API Key"
 
-    def usage_display(self, obj):
-        percentage = (
-            (obj.current_month_usage / obj.monthly_message_limit) * 100
-            if obj.monthly_message_limit > 0
-            else 0
-        )
-        color = "red" if percentage > 80 else "orange" if percentage > 60 else "green"
-        return format_html(
-            '<span style="color: {};">{}/{} ({}%)</span>',
-            color,
-            obj.current_month_usage,
-            obj.monthly_message_limit,
-            int(percentage),
-        )
+    def session_count(self, obj):
+        """Display total session count"""
+        count = obj.sessions.count()
+        color = "green" if count > 0 else "gray"
+        return format_html('<span style="color: {};">{}</span>', color, count)
 
-    usage_display.short_description = "Usage This Month"
+    session_count.short_description = "Sessions"
 
-
-@admin.register(ChatbotConfiguration)
-class ChatbotConfigurationAdmin(admin.ModelAdmin):
-    list_display = ("client", "title", "model", "temperature")
-    list_filter = ("model",)
-    search_fields = ("client__name", "title")
-
-    fieldsets = (
-        ("Basic Configuration", {"fields": ("client", "title", "welcome_message")}),
-        (
-            "AI Configuration",
-            {"fields": ("system_prompt", "model", "temperature", "max_tokens")},
-        ),
-        ("Appearance", {"fields": ("primary_color", "position", "theme")}),
-        ("Knowledge Base", {"fields": ("knowledge_content", "knowledge_file")}),
-        (
-            "Rate Limiting",
-            {"fields": ("messages_per_session", "tool_calls_per_session")},
-        ),
-    )
+    def save_model(self, request, obj, form, change):
+        """Set created_by to current user when creating"""
+        if not change:  # Only on creation
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(ChatSession)
 class ChatSessionAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = [
         "id_short",
-        "client",
-        "domain",
+        "client_link",
+        "session_id_short",
         "message_count",
         "started_at",
+        "session_duration",
         "session_status",
+    ]
+    list_filter = ["started_at", "client"]
+    search_fields = ["client__name", "client__domain", "session_id"]
+    readonly_fields = ["id", "started_at", "ended_at"]
+    raw_id_fields = ["client"]
+
+    fieldsets = (
+        (None, {"fields": ("client", "session_id")}),
+        ("Session Data", {"fields": ("message_count", "started_at", "ended_at")}),
+        ("Metadata", {"fields": ("id",), "classes": ("collapse",)}),
     )
-    list_filter = ("started_at", "client")
-    search_fields = ("client__name", "domain")
-    readonly_fields = ("id", "started_at")
 
     def id_short(self, obj):
+        """Display shortened UUID"""
         return str(obj.id)[:8]
 
-    id_short.short_description = "Session ID"
+    id_short.short_description = "ID"
+
+    def session_id_short(self, obj):
+        """Display shortened session ID"""
+        if len(obj.session_id) > 16:
+            return f"{obj.session_id[:16]}..."
+        return obj.session_id
+
+    session_id_short.short_description = "Session ID"
+
+    def client_link(self, obj):
+        """Link to client admin page"""
+        url = reverse("admin:chatbot_client_change", args=[obj.client.id])
+        return format_html('<a href="{}">{}</a>', url, obj.client.name)
+
+    client_link.short_description = "Client"
 
     def session_status(self, obj):
+        """Display session status"""
         if obj.ended_at:
-            duration = obj.ended_at - obj.started_at
-            return f"Ended ({duration.total_seconds():.0f}s)"
+            return format_html('<span style="color: gray;">Ended</span>')
         return format_html('<span style="color: green;">Active</span>')
 
     session_status.short_description = "Status"
 
+    def session_duration(self, obj):
+        """Calculate and display session duration"""
+        if obj.ended_at and obj.started_at:
+            duration = obj.ended_at - obj.started_at
+            seconds = int(duration.total_seconds())
+            if seconds < 60:
+                return f"{seconds}s"
+            elif seconds < 3600:
+                return f"{seconds // 60}m {seconds % 60}s"
+            else:
+                hours = seconds // 3600
+                minutes = (seconds % 3600) // 60
+                return f"{hours}h {minutes}m"
+        return "—"
 
-@admin.register(ChatMessage)
-class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = (
-        "session_short",
-        "message_preview",
-        "response_time_ms",
-        "created_at",
-    )
-    list_filter = ("created_at", "session__client")
-    search_fields = ("message", "response")
-    readonly_fields = ("created_at",)
-
-    def session_short(self, obj):
-        return f"{obj.session.client.name} - {str(obj.session.id)[:8]}"
-
-    session_short.short_description = "Session"
-
-    def message_preview(self, obj):
-        return obj.message[:50] + "..." if len(obj.message) > 50 else obj.message
-
-    message_preview.short_description = "Message"
+    session_duration.short_description = "Duration"

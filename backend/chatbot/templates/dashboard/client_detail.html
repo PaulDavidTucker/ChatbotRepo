@@ -1,11 +1,19 @@
-{% extends 'base.html' %} {% block title %}{{ client.name }} - Client Detail{%
-endblock %} {% block content %}
+{% extends 'base.html' %} {% load static %} {% block title %}{{ client.name }} -
+Client Detail{% endblock %} {% block content %}
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
             <div>
+                <a
+                    href="{% url 'dashboard' %}"
+                    class="btn btn-sm btn-outline-secondary mb-2"
+                >
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
                 <h1>{{ client.name }}</h1>
-                <p class="text-muted">{{ client.email }}</p>
+                <p class="text-muted">
+                    <i class="bi bi-globe"></i> {{ client.domain }}
+                </p>
             </div>
             <div>
                 <a
@@ -19,40 +27,70 @@ endblock %} {% block content %}
     </div>
 </div>
 
-<!-- Client Info Cards -->
+<!-- Stats Cards -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>{{ client.total_sessions }}</h5>
-                <p class="text-muted">Total Sessions</p>
+                <h3 class="text-primary">{{ stats.total_sessions }}</h3>
+                <p class="text-muted mb-0">Total Sessions</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>{{ client.total_messages }}</h5>
-                <p class="text-muted">Total Messages</p>
+                <h3 class="text-success">{{ stats.sessions_last_30_days }}</h3>
+                <p class="text-muted mb-0">Last 30 Days</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>{{ client.avg_response_time }}ms</h5>
-                <p class="text-muted">Avg Response Time</p>
+                <h3 class="text-info">{{ stats.total_messages }}</h3>
+                <p class="text-muted mb-0">Total Messages</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>
-                    {{ client.current_month_usage }}/{{
-                    client.monthly_message_limit }}
-                </h5>
-                <p class="text-muted">Monthly Usage</p>
+                <h3 class="text-warning">
+                    {{ stats.avg_messages_per_session|floatformat:1 }}
+                </h3>
+                <p class="text-muted mb-0">Avg Msgs/Session</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Configuration -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>API Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>API Key</strong></label>
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            class="form-control font-monospace"
+                            value="{{ client.api_key }}"
+                            id="apiKeyInput"
+                            readonly
+                        />
+                        <button
+                            class="btn btn-outline-secondary"
+                            onclick="copyApiKey('{{ client.api_key }}')"
+                        >
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -63,81 +101,139 @@ endblock %} {% block content %}
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5>Embed Code</h5>
+                <h5>Widget Embed Code</h5>
             </div>
             <div class="card-body">
-                <p>Copy this code to embed the chatbot on your website:</p>
-                <div class="bg-light p-3 rounded">
-                    <code id="embedCode"
-                        >&lt;script src="{{ request.scheme }}://{{
-                        request.get_host
-                        }}/widget/v1/chatbot.js"&gt;&lt;/script&gt;
-                        &lt;script&gt; initChatbot({ apiKey: "{{ client.api_key
-                        }}", apiEndpoint: "{{ request.get_host }}" });
-                        &lt;/script&gt;</code
-                    >
+                <p>
+                    Copy this code to embed the chatbot on
+                    <strong>{{ client.domain }}</strong>:
+                </p>
+                <div class="bg-light p-3 rounded position-relative">
+                    <pre
+                        class="mb-0"
+                        id="embedCode"
+                    ><code>&lt;!-- Chatbot Widget --&gt;
+&lt;script src="{{ request.scheme }}://{{ request.get_host }}/widget/v1/chatbot.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  initChatbot({
+    apiKey: "{{ client.api_key }}",
+    apiEndpoint: "{{ request.scheme }}://{{ request.get_host }}"
+  });
+&lt;/script&gt;</code></pre>
                 </div>
                 <button
-                    class="btn btn-outline-primary mt-2"
+                    class="btn btn-outline-primary mt-3"
                     onclick="copyEmbedCode()"
                 >
-                    <i class="bi bi-copy"></i> Copy Code
+                    <i class="bi bi-clipboard"></i> Copy Embed Code
                 </button>
+                <a
+                    href="{% url 'widget_demo' %}"
+                    class="btn btn-outline-secondary mt-3"
+                    target="_blank"
+                >
+                    <i class="bi bi-box-arrow-up-right"></i> Test Widget
+                </a>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Configuration (JSON) -->
+{% if client.config %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Current Configuration</h5>
+            </div>
+            <div class="card-body">
+                <pre
+                    class="bg-light p-3 rounded"
+                ><code>{{ client.config|pprint }}</code></pre>
+                <p class="text-muted mb-0">
+                    <small
+                        >Edit configuration via the API or Django admin
+                        panel</small
+                    >
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Recent Sessions -->
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5>Recent Sessions</h5>
+                <h5>Recent Sessions (Last 50)</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Session ID</th>
-                                <th>Domain</th>
                                 <th>Started</th>
+                                <th>Ended</th>
                                 <th>Duration</th>
                                 <th>Messages</th>
-                                <th>Tool Calls</th>
-                                <th>Actions</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for session in sessions %}
                             <tr>
                                 <td>
-                                    <code>{{ session.id|slice:":8" }}...</code>
+                                    <code
+                                        >{{ session.session_id|slice:":20" }}{%
+                                        if session.session_id|length > 20
+                                        %}...{% endif %}</code
+                                    >
                                 </td>
-                                <td>{{ session.domain }}</td>
-                                <td>{{ session.started_at }}</td>
+                                <td>
+                                    {{ session.started_at|date:"M d, Y H:i" }}
+                                </td>
                                 <td>
                                     {% if session.ended_at %} {{
-                                    session.duration }} {% else %}
-                                    <span class="badge bg-success">Active</span>
+                                    session.ended_at|date:"M d, Y H:i" }} {%
+                                    else %} — {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.ended_at and
+                                    session.started_at %} {% with
+                                    duration=session.ended_at|timesince:session.started_at
+                                    %} {{ duration }} {% endwith %} {% else %} —
                                     {% endif %}
                                 </td>
-                                <td>{{ session.message_count }}</td>
-                                <td>{{ session.tool_calls_count }}</td>
                                 <td>
-                                    <button
-                                        class="btn btn-sm btn-outline-primary"
-                                        onclick="viewSessionMessages('{{ session.id }}')"
+                                    <span class="badge bg-info"
+                                        >{{ session.message_count }}</span
                                     >
-                                        <i class="bi bi-eye"></i> View Messages
-                                    </button>
+                                </td>
+                                <td>
+                                    {% if session.ended_at %}
+                                    <span class="badge bg-secondary"
+                                        >Ended</span
+                                    >
+                                    {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">
-                                    No sessions yet
+                                <td
+                                    colspan="6"
+                                    class="text-center text-muted py-4"
+                                >
+                                    No sessions recorded yet.
+                                    <br /><small
+                                        >Sessions will appear here once users
+                                        interact with the chatbot.</small
+                                    >
                                 </td>
                             </tr>
                             {% endfor %}
@@ -148,4 +244,39 @@ endblock %} {% block content %}
         </div>
     </div>
 </div>
+
+<script>
+    function copyApiKey(apiKey) {
+        navigator.clipboard.writeText(apiKey).then(function () {
+            showToast("API Key copied to clipboard!", "success");
+        });
+    }
+
+    function copyEmbedCode() {
+        const embedCode = document.getElementById("embedCode").textContent;
+        navigator.clipboard.writeText(embedCode).then(function () {
+            showToast("Embed code copied to clipboard!", "success");
+        });
+    }
+
+    function showToast(message, type = "info") {
+        const toast = document.createElement("div");
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.top = "20px";
+        toast.style.right = "20px";
+        toast.style.zIndex = "9999";
+        toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+</script>
 {% endblock %}

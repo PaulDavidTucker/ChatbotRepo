@@ -18,9 +18,7 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 print(f"Base Path is ${BASE_DIR}")
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -28,6 +26,7 @@ env = environ.Env(
     # 2. Set casting and default values
     DEBUG=(bool, False)
 )
+SECRET_KEY = "Test"
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
@@ -128,7 +127,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-    BASE_DIR / "chatbot-widget" / "dist",  # Widget build output
+    BASE_DIR / "staticfiles" / "chatbot" / "js",  # Widget build output
 ]
 
 # Media files

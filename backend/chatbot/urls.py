@@ -8,6 +8,7 @@ urlpatterns = [
     # Dashboard
     path("", views.dashboard, name="dashboard"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/analytics/", views.analytics, name="analytics"),
     path(
         "dashboard/client/<uuid:client_id>/", views.client_detail, name="client_detail"
     ),
