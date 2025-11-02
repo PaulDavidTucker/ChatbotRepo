@@ -1,0 +1,75 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to Render? (yes/no)"
+        required: true
+        default: "no"
+        type: choice
+        options: ["yes", "no"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine if deployment should run
+        id: should-deploy
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.deploy }}" = "yes" ]; then
+              echo "deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHER_OUTPUT
+              echo "Skipping deployment as per UI input."
+              exit 0
+            fi
+          else
+            COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.sha }})
+            if echo "$COMMIT_MESSAGE" | grep -iq "deploy=yes"; then
+              echo "deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHUB_OUTPUT
+              echo "No 'deploy=yes' in commit message. Skipping."
+              exit 0
+            fi
+          fi
+
+      - name: Trigger Render Deployment
+        if: steps.should-deploy.outputs.deploy == 'true'
+        uses: render-inc/deploy-action@v1.0
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+          deploy-hook: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          wait-for-success: true
+
+      - name: Send Notification
+        if: always() && steps.should-deploy.outputs.deploy == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Render Deployment Status for ${{ github.repository }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: ${{ secrets.FROM_EMAIL }}
+          body: |
+            Deployment for commit ${{ github.sha }}:
+            ${{ job.status == 'success' && 'Succeeded!' || 'Failed! Check GitHub Actions logs for details.' }}
+            Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
