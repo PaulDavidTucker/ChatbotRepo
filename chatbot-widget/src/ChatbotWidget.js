@@ -20,12 +20,19 @@ const ChatbotWidget = ({ config }) => {
   };
 
   useEffect(() => {
-    // Connect to your Django service with client identification
     const wsProtocol =
       window.location.protocol === "https:" ? "wss://" : "ws://";
-    const wsURL = `${wsProtocol}${widgetConfig.apiEndpoint}/ws/chat/${widgetConfig.apiKey}/?domain=${encodeURIComponent(window.location.hostname)}`;
+    const endpointUrl = new URL(config.apiEndpoint);
 
-    socket.current = new WebSocket(wsURL);
+    const derivedProtocol =
+      endpointUrl.protocol === "https:" ? "wss://" : "ws://";
+
+    // Use provided wsProtocol if set, else derived
+    const baseProtocol = wsProtocol || derivedProtocol;
+    const baseUrl = `${baseProtocol}${endpointUrl.host}`;
+    const wsUrl = `${baseUrl}/ws/chat/${config.apiKey}/?domain=${encodeURIComponent(window.location.hostname)}`;
+
+    socket.current = new WebSocket(wsUrl);
 
     socket.current.onopen = () => {
       console.log("Connected to chatbot service");

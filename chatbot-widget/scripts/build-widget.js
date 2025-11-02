@@ -319,7 +319,16 @@ let widgetContent = `
 
         function initializeWebSocket() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const wsUrl = \`\${wsProtocol}\${config.apiEndpoint}/ws/chat/\${config.apiKey}/?domain=\${encodeURIComponent(window.location.hostname)}\`;
+
+            const endpointUrl = new URL(config.apiEndpoint);
+
+            const derivedProtocol =
+              endpointUrl.protocol === "https:" ? "wss://" : "ws://";
+
+            const baseProtocol = wsProtocol || derivedProtocol;
+
+            const baseUrl = \`\${baseProtocol}\${endpointUrl.host}\`;
+            const wsUrl = \`\${baseUrl}/ws/chat/\${config.apiKey}/?domain=\${encodeURIComponent(window.location.hostname)}\`;
 
             socket = new WebSocket(wsUrl);
 

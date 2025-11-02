@@ -22,16 +22,10 @@ environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-env = environ.Env(
-    # 2. Set casting and default values
-    DEBUG=(bool, False)
-)
+env = environ.Env(DEBUG=(bool, False))
 SECRET_KEY = "Test"
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS",
